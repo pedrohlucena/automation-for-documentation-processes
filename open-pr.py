@@ -11,7 +11,7 @@ class OpenPr:
         config = self.__get_configuration_object()
         self.repository = config['REPOSITORY']
         self.origin_branch = config['ORIGIN_BRANCH']
-        self.target_branch = config['TARGET_BRANCH'] 
+        self.target_branch = config['TARGET_BRANCH']
         self.region = config['REGION']
         self.profile = config['PROFILE']
         self.account_id = config['PROFILE']
@@ -106,7 +106,7 @@ class OpenPr:
             return deliveryBranchName
 
     def __get_card_number(self, branchName):
-        return branchName[branchName.find('/')+1:]
+        return branchName[branchName.find('/')+1:branchName.rfind('-')]
 
     def main(self):
         self.__push_branch_to_codecommit(self.__get_current_branch_name())
