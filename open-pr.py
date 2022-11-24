@@ -30,8 +30,8 @@ class OpenPr:
     
     def __get_configuration_object(self):
         configuration_object = {}
-        configuration_object['REPOSITORY'] = sys.argv[1]
-        configuration_object['TARGET_BRANCH'] = sys.argv[2]
+        configuration_object['REPOSITORY'] =  'repository'
+        configuration_object['TARGET_BRANCH'] = 'target branch'
         configuration_object['ORIGIN_BRANCH'] = sys.argv[3] if self.__there_is_origin_branch() else self.__get_current_branch_name()
 
         configuration_object['PROFILE'] = os.getenv('PROFILE')
@@ -92,18 +92,23 @@ class OpenPr:
         os.system(f'git fetch origin {self.target_branch}')
         os.system(f'git checkout {self.target_branch}')
         os.system(f'git pull origin {self.target_branch}')
+
+        intermediateBranchName = ''
         
         if (self.target_branch != 'master'):
-            os.system(f'git checkout -b {self.origin_branch}-{self.target_branch}')
+            intermediateBranchName = {self.origin_branch}-{self.target_branch}
+            os.system(f'git branch -D {intermediateBranchName}')
+            os.system(f'git checkout -b {intermediateBranchName}')
             os.system(f'git merge {self.origin_branch}')
             print('Branch intermediária criada! Agora é só resolver os conflitos :3')
         else:
-            deliveryBranchName = self.origin_branch.replace('feature', 'delivery')
-            os.system(f'git checkout -b {deliveryBranchName}')
+            intermediateBranchName = self.origin_branch.replace('feature', 'delivery')
+            os.system(f'git branch -D {intermediateBranchName}')
+            os.system(f'git checkout -b {intermediateBranchName}')
             os.system(f'git merge {self.origin_branch} --squash')
             os.system(f'git commit -m "delivery of {self.card_number}"')
-            self.__push_branch_to_codecommit(deliveryBranchName)
-            return deliveryBranchName
+            self.__push_branch_to_codecommit(intermediateBranchName)
+            return intermediateBranchName
 
     def __get_card_number(self, branchName):
         return branchName[branchName.find('/')+1:branchName.rfind('-')]
