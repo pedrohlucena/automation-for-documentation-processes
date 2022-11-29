@@ -53,7 +53,7 @@ class OpenPr:
     def __open_pr(self):
         prTitle = 'DOC DE CLIENTE'
         if self.target_branch == 'master':
-            deliveryBranchName = self.__create_intermediate_branch()
+            deliveryBranchName = self.__create_delivery_branch()
             self.origin_branch = deliveryBranchName
         pr = self.aws_code_commit.create_pull_request(prTitle, self.repository, self.origin_branch, self.target_branch)
         pr_id = pr['pullRequest']['pullRequestId']
@@ -82,39 +82,33 @@ class OpenPr:
         '''
         return pr_message
 
-    def __push_branch_to_codecommit(self, branch):
-        os.system(f'git push origin {branch}')
-
-    def __get_current_branch_name(self):
-        return os.popen('git rev-parse --abbrev-ref HEAD').read().strip() 
-
-    def __create_intermediate_branch(self):
+    def __fetch_checkout_and_pull(self):
         os.system(f'git fetch origin {self.target_branch}')
         os.system(f'git checkout {self.target_branch}')
         os.system(f'git pull origin {self.target_branch}')
 
-        intermediateBranchName = ''
-        
-        if (self.target_branch != 'master'):
-            intermediateBranchName = {self.origin_branch}-{self.target_branch}
-            os.system(f'git branch -D {intermediateBranchName}')
-            os.system(f'git checkout -b {intermediateBranchName}')
-            os.system(f'git merge {self.origin_branch}')
-            print('Branch intermediária criada! Agora é só resolver os conflitos :3')
-        else:
-            intermediateBranchName = self.origin_branch.replace('feature', 'delivery')
-            os.system(f'git branch -D {intermediateBranchName}')
-            os.system(f'git checkout -b {intermediateBranchName}')
-            os.system(f'git merge {self.origin_branch} --squash')
-            os.system(f'git commit -m "delivery of {self.card_number}"')
-            self.__push_branch_to_codecommit(intermediateBranchName)
-            return intermediateBranchName
+    def __create_intermediate_branch(self):
+        self.__fetch_checkout_and_pull()
+        branch_name = {self.origin_branch}-{self.target_branch}
+        os.system(f'git branch -D {branch_name}')
+        os.system(f'git checkout -b {branch_name}')
+        os.system(f'git merge {self.origin_branch}')
+        print('Branch intermediária criada! Agora é só resolver os conflitos :3')
 
+    def __create_delivery_branch(self):
+        self.__fetch_checkout_and_pull()
+        branch_name = self.origin_branch.replace('feature', 'delivery')
+        os.system(f'git branch -D {branch_name}')
+        os.system(f'git checkout -b {branch_name}')
+        os.system(f'git merge {self.origin_branch} --squash')
+        os.system(f'git commit -m "delivery of {self.card_number}"')
+        self.__push_branch_to_codecommit(branch_name)
+        return branch_name
+            
     def __get_card_number(self, branchName):
         return branchName[branchName.find('/')+1:branchName.rfind('-')]
 
     def main(self):
-        self.__push_branch_to_codecommit(self.__get_current_branch_name())
         isMergeable = self.__check_if_mergeable()
         if isMergeable:
             pr_id = self.__open_pr()
