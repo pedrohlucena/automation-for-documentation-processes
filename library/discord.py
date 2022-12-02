@@ -19,8 +19,12 @@ class Discord:
 
         return [payload, header]
 
-    def send_message(self, pr_channel_id, message):
+    def send_message(self, channel_ids, message):
         payload, header = self.__fetch_request_information(message)
-        requests.post(
-            f'https://discord.com/api/v9/channels/{pr_channel_id}/messages', data=payload, headers=header
-        )
+        for channel_id in channel_ids:
+            r = requests.post(
+                f'https://discord.com/api/v9/channels/{channel_id}/messages', data=payload, headers=header
+            )
+            print(f'Return Code:: {r.status_code}')
+            print(f'Return Content:: {r.content}')
+            print(f'Message Length:: {len(payload["content"])}')
