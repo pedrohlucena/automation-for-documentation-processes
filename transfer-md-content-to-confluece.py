@@ -1,4 +1,5 @@
 import os
+import re
 import markdown
 from library.confluence import ConfluenceIntegration
 from library.jira import JiraIntegration
@@ -16,8 +17,6 @@ class TransferMdContentToConfluence:
             'comportamentos',
             'pedro-teste.md'
         )
-        
-        print(self.md_file_path)
 
         self.parent_page_title = '(Cliente) Core'
 
@@ -38,19 +37,10 @@ class TransferMdContentToConfluence:
         self.confluence_page_body = self.confluence_page_body[index_of_first_hifen_sequence+4:]
 
     def __join_md_lines_into_a_md_content(self, md_lines):
-        return '\n'.join(md_lines)
+        return '\n'.join(md_lines)        
 
-    def __convert_md_content_to_html(self, md_content):
-        md_content_converted_to_html = markdown.markdown(
-            md_content,
-            extensions=[TableExtension(use_align_attribute=True)]
-        )
-        return md_content_converted_to_html
-
-    def __mount_the_final_confluence_page_body(self):
-        md_content = self.__join_md_lines_into_a_md_content(self.confluence_page_body)
-        md_content_converted_to_html = self.__convert_md_content_to_html(md_content)
-        self.confluence_page_body = md_content_converted_to_html
+    def __mount_the_final_confluence_page_body(self, md_translated_to_html):
+        self.confluence_page_body = md_translated_to_html
 
     def __set_initial_confluence_page_body(self, md_lines):
         self.confluence_page_body = md_lines
@@ -67,6 +57,35 @@ class TransferMdContentToConfluence:
     def __it_is_sidebar_position(self, index, line, md_lines):
         return line.__contains__('---') and md_lines[index+1].__contains__('sidebar_position:')
 
+    def __translate_md_to_html(self):
+        md_content = self.__join_md_lines_into_a_md_content(self.confluence_page_body)
+
+        md_content_converted_to_html = markdown.markdown(
+            md_content,
+            extensions=[TableExtension(use_align_attribute=True)]
+        )
+        return md_content_converted_to_html
+
+    def __get_link_name_on_anchor_html_tag(self, html_link):
+        link_name_regex = r'(GET|POST|PUT).+(?=<\/a>)'
+        link_name = re.search(link_name_regex, html_link).group()
+        return link_name
+
+    def __fix_anchor_tag_hrefs(self):
+        html_href_content_regex = r'((?<=href=").+?(?="))'
+        html_anchor_tag_regex = r'(<a href="\..+?(?=\/a>)\/a>)'
+        md_translated_to_html = self.__translate_md_to_html()
+        html_achor_tags = re.findall(html_anchor_tag_regex, md_translated_to_html)
+
+        for html_anchor_tag in html_achor_tags:
+            link_name = self.__get_link_name_on_anchor_html_tag(html_anchor_tag)
+            confluence_page_link = self.confluence_integration.get_page_url_by_name(link_name)
+            old_href_with_md_reference = re.search(html_href_content_regex, html_anchor_tag).group()
+            new_href_with_html_reference = html_anchor_tag.replace(old_href_with_md_reference, confluence_page_link)
+            md_translated_to_html = md_translated_to_html.replace(html_anchor_tag, new_href_with_html_reference)
+
+        return md_translated_to_html
+        
     def __extract_and_clean_info_from_md_lines(self, md_lines):
         self.__set_initial_confluence_page_body(md_lines)
 
@@ -81,7 +100,9 @@ class TransferMdContentToConfluence:
                 self.__take_off_page_title_of_confluence_page_body()
                 title_if_statement_already_run = True
         
-        self.__mount_the_final_confluence_page_body()
+        md_translated_to_html = self.__fix_anchor_tag_hrefs()
+
+        self.__mount_the_final_confluence_page_body(md_translated_to_html)
 
     def __get_md_content(self):
         if os.path.exists(self.md_file_path):
@@ -96,7 +117,7 @@ class TransferMdContentToConfluence:
         return md_content.splitlines()        
         
     def __transfer_md_content_to_confluence(self):
-        parent_page_id = self.confluence_integration.get_page_id(self.parent_page_title)
+        parent_page_id = self.confluence_integration.get_page_id_by_name(self.parent_page_title)
         self.confluence_integration.pass_to_confluence(parent_page_id, self.confluence_page_title, self.confluence_page_body)
         
     def __get_card_status(self):
