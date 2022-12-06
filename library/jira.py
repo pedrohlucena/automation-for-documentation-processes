@@ -1,3 +1,4 @@
+import json
 import os
 from atlassian import Jira
 from dotenv import load_dotenv, find_dotenv
@@ -18,3 +19,6 @@ class JiraIntegration:
 
     def move_card_to_review(self, card_key):
         self.jira_instance.set_issue_status(card_key, 'Review', fields=None)
+
+    def get_card_name(self, card_key):
+        return self.jira_instance.issue(card_key)['fields']['summary']
