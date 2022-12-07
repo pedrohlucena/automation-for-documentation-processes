@@ -15,12 +15,10 @@ class TransferMdContentToConfluence:
             os.getenv('DOCS_FOLDER_IN_DOC_CONTENT_REPOSITORY_PATH'),
             'core',
             'comportamentos',
-            'pedro-teste.md'
+            'post-behavior.md'
         )
-
-        self.parent_page_title = '(Cliente) Core'
-
-        self.card_key = 'IC-7332'
+        self.parent_page_title = 'Comportamentos'
+        self.card_key = 'IC-7383'
 
         self.card_url = f'{os.getenv("ICLUBS_ATLASSIAN_BASE_URL")}/browse/{self.card_key}'
 
@@ -153,6 +151,7 @@ Pode dar uma olhadinha de novo? :heart:'''
         else:
             fix_message = self.__get_discord_fix_message()
             self.__notify_the_documentation_reviewers(fix_message)
+        self.jira_integration.watch_card(self.card_key)
 
 tmc = TransferMdContentToConfluence()
 tmc.main()
