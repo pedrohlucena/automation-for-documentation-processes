@@ -136,6 +136,10 @@ Pode dar uma olhadinha de novo? :heart:'''
     def __notify_the_documentation_reviewers(self, message):
         self.discord_integration.send_message(self.doc_reviewer_channel_ids, message)
 
+    def __watch_parent_card(self, child_card_key):
+        parent_card_key = self.jira_integration.get_parent_card_key(child_card_key)
+        self.jira_integration.watch_card(parent_card_key)
+
     def main(self):
         splitted_lines_of_the_md = self.__get_the_md_with_splitted_md_lines()
 
@@ -151,7 +155,7 @@ Pode dar uma olhadinha de novo? :heart:'''
         else:
             fix_message = self.__get_discord_fix_message()
             self.__notify_the_documentation_reviewers(fix_message)
-        self.jira_integration.watch_card(self.card_key)
+        self.__watch_parent_card(self.card_key)
 
 tmc = TransferMdContentToConfluence()
 tmc.main()

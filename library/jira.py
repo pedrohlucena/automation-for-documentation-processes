@@ -27,3 +27,6 @@ class JiraIntegration:
 
     def watch_card(self, card_key):
         self.jira_instance.issue_add_watcher(card_key, self.pedro_atlassian_account_id)
+
+    def get_parent_card_key(self, child_card):
+        return self.jira_instance.issue(child_card)['fields']['parent']['key']
