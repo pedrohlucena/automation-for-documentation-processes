@@ -23,7 +23,7 @@ class JiraIntegration:
         self.jira_instance.set_issue_status(card_key, 'Review', fields=None)
 
     def get_card_name(self, card_key):
-        return self.jira_instance.issue(card_key)
+        return self.jira_instance.issue(card_key)['fields']['summary']
 
     def watch_card(self, card_key):
         self.jira_instance.issue_add_watcher(card_key, self.pedro_atlassian_account_id)
