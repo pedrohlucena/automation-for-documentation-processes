@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 
 class Popup:
-    def __mount_send_discord_message_popup(pr_url):
+    def mount_send_discord_message_popup(self, pr_url):
         column_to_be_centered = [
             [sg.Text('Link da PR:', size=(45, 1), justification="center")],
             [sg.Text(
@@ -25,7 +25,7 @@ class Popup:
 
         return window
 
-    def __mount_conflict_popup():
+    def mount_conflict_popup(self):
         column_to_be_centered = [
             [sg.Text(
                 'Já resolveu os conflitos? Posso terminar de fazer a subida?', 
