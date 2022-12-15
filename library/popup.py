@@ -44,3 +44,34 @@ class Popup:
         window = sg.Window("Conflitos na subida...", layout)
 
         return window
+
+    def mount_branch_already_exists_popup(self, repo, branch):
+        column_to_be_centered = [
+            [sg.Text(f'A branch "{branch}" já existe no repositório "{repo}"...', size=(100, 1), justification="center")], 
+            [sg.Text(f'Que ação você deseja fazer?', size=(60, 1), justification="center")],
+            [sg.Button(f'Seguir o processo com a branch já existente')],
+            [sg.Button('Recriar a branch e seguir com o processo')],
+            [sg.Button('Encerrar o processo')],
+        ]
+
+        layout = [
+            [sg.VPush()],
+            [sg.Push(), sg.Column(column_to_be_centered,element_justification='c'), sg.Push()],
+            [sg.VPush()]
+        ]
+
+        window = sg.Window("A branch que você deseja criar já existe", layout)
+
+        return window
+
+# p = Popup()
+
+# window = p.branch_already_exists_popup('master', 'iclubs-loyalty-documentation-website-content')
+
+# while True:
+#     event, values = window.read()
+#     if event == "Sim":
+#         print('Sim')
+#         exit()
+#     if event == "Não":
+#         print('Não')
