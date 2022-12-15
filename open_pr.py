@@ -42,11 +42,6 @@ class OpenPr:
     def get_card_name_pr_title_snippet(self):
         return self.jira_integration.get_card_name(self.card).replace('"', "'")
 
-    def blablabla(self):
-        self.process = Process(target=self.main)
-        print(self.process)
-        self.process.start()
-
     def main(self):
         self.__go_to_docs_repo_in_origin_branch()
 
@@ -110,14 +105,10 @@ class OpenPr:
         os.system(f'git checkout {self.target_branch}')
         os.system(f'git pull origin {self.target_branch}')
 
-    def __delete_local_branch(self, branch_name):
-        os.system(f'git branch -D {branch_name}')
-
     def __create_normal_intermediate_branch(self):
         self.__fetch_checkout_and_pull()
         intermediate_branch_name = f'{self.origin_branch}-{self.target_branch}'
-        self.__delete_local_branch(intermediate_branch_name)
-        os.system(f'git checkout -b {intermediate_branch_name}')
+        self.git.create_local_branch_controller(self.repository, intermediate_branch_name)
         os.system(f'git merge {self.origin_branch}')
         self.origin_branch = intermediate_branch_name
 
@@ -129,10 +120,8 @@ class OpenPr:
         
     def __create_delivery_branch(self):
         delivery_branch_name = self.origin_branch.replace('feature', 'delivery')
-
         self.__fetch_checkout_and_pull()
-        self.__delete_local_branch(delivery_branch_name)
-        os.system(f'git checkout -b {delivery_branch_name}')
+        self.git.create_local_branch_controller(self.repository, delivery_branch_name)
         os.system(f'git merge {self.origin_branch} --squash')
 
         self.origin_branch = delivery_branch_name
@@ -159,12 +148,12 @@ class OpenPr:
             event, values = window.read()
             if event == "Sim":
                 self.__send_discord_message(pr_url)
-                self.process.kill()
+                exit()
             if event == "Não":
-                self.process.kill()
+                exit()
             elif event.startswith("URL "):
                 url = event.split(' ')[1]
                 webbrowser.open(url)
        
 op = OpenPr()
-op.blablabla()
+op.main()
