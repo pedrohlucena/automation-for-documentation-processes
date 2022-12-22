@@ -63,15 +63,20 @@ class Popup:
         window = sg.Window("A branch que você deseja criar já existe", layout)
 
         return window
+    
+    def mount_recreate_branch_popup(self, branch_to_be_recreated, current_branch):
+        column_to_be_centered = [
+            [sg.Text(f'Branch que será recriada: {branch_to_be_recreated}', size=(100, 1), justification="center")], 
+            [sg.Button(f'Recriar a partir da branch atual ({current_branch})')],
+            [sg.Button('Recriar a partir da referência dessa branch no CodeCommit')],
+        ]
 
-# p = Popup()
+        layout = [
+            [sg.VPush()],
+            [sg.Push(), sg.Column(column_to_be_centered,element_justification='c'), sg.Push()],
+            [sg.VPush()]
+        ]
 
-# window = p.branch_already_exists_popup('master', 'iclubs-loyalty-documentation-website-content')
+        window = sg.Window("Recriando branch", layout)
 
-# while True:
-#     event, values = window.read()
-#     if event == "Sim":
-#         print('Sim')
-#         exit()
-#     if event == "Não":
-#         print('Não')
+        return window
