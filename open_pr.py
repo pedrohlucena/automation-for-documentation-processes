@@ -1,4 +1,3 @@
-from multiprocessing import Process
 import os
 import webbrowser
 from library.codecommit import CodeCommit
@@ -15,11 +14,12 @@ class OpenPr:
     def __init__(self):
         self.doc_state = DocState()
 
-        self.card = self.doc_state.card_key
+        self.uppercase_card_key = self.doc_state.card_key
         self.origin_branch = self.doc_state.origin_branch_name
-        self.target_branch = 'develop'
+        self.target_branch = 'master'
         self.repository = os.getenv('DOC_CONTENT_REPOSITORY_NAME')
 
+        self.lowercase_card_key = self.uppercase_card_key.lower()
         self.merge_type = 'THREE_WAY_MERGE'
         self.region = os.getenv('REGION')
         self.profile = os.getenv('PROFILE')
@@ -37,10 +37,10 @@ class OpenPr:
         self.popup = Popup()
         self.git = Git()
 
-        self.pr_title = f'{self.card}: {self.get_card_name_pr_title_snippet()}'
+        self.pr_title = f'{self.uppercase_card_key}: {self.get_card_name_pr_title_snippet()}'
 
     def get_card_name_pr_title_snippet(self):
-        return self.jira_integration.get_card_name(self.card).replace('"', "'")
+        return self.jira_integration.get_card_name(self.uppercase_card_key).replace('"', "'")
 
     def main(self):
         self.__go_to_docs_repo_in_origin_branch()
@@ -48,9 +48,10 @@ class OpenPr:
         self.mergeable = self.__check_if_mergeable()
         
         if self.target_branch == 'master':
-            self.__create_intermediate_branch()
+            self.__create_delivery_branch()
 
             if self.mergeable:
+                self.git.add_and_commit(f'merge branch {self.origin_branch} in {self.target_branch}')
                 self.git.push_branch_to_codecommit(self.origin_branch)
             else:
                 self.__render_conflict_popup()
@@ -59,7 +60,7 @@ class OpenPr:
             self.__open_pr()
         else:
             print(f'O repositório: {self.repository}, possui conflito!')
-            self.__create_intermediate_branch()
+            self.__create_normal_intermediate_branch()
             self.__render_conflict_popup()
 
     def __go_to_docs_repo(self):
@@ -100,27 +101,16 @@ class OpenPr:
         '''
         return pr_message
 
-    def __fetch_checkout_and_pull(self):
-        os.system(f'git fetch origin {self.target_branch}')
-        os.system(f'git checkout {self.target_branch}')
-        os.system(f'git pull origin {self.target_branch}')
-
     def __create_normal_intermediate_branch(self):
-        self.__fetch_checkout_and_pull()
+        self.git.fetch_checkout_and_pull(self.target_branch)
         intermediate_branch_name = f'{self.origin_branch}-{self.target_branch}'
         self.git.create_local_branch_controller(self.repository, intermediate_branch_name)
         os.system(f'git merge {self.origin_branch}')
         self.origin_branch = intermediate_branch_name
-
-    def __create_intermediate_branch(self):
-        if self.target_branch == 'master':
-            self.__create_delivery_branch()
-        else:
-            self.__create_normal_intermediate_branch()
         
     def __create_delivery_branch(self):
-        delivery_branch_name = self.origin_branch.replace('feature', 'delivery')
-        self.__fetch_checkout_and_pull()
+        delivery_branch_name = f'delivery/{self.lowercase_card_key}'
+        self.git.fetch_checkout_and_pull(self.target_branch)
         self.git.create_local_branch_controller(self.repository, delivery_branch_name)
         os.system(f'git merge {self.origin_branch} --squash')
 
